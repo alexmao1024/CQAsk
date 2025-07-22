@@ -160,8 +160,8 @@ cython_debug/
 #.idea/
 
 backend./.env
-backend/generated/*
-backend/conversations/*
+backend/data/generated/*
+backend/data/conversations/*
 # General
 .DS_Store
 .AppleDouble

@@ -26,7 +26,7 @@ def tessellate_cad_objects(
         """递归地解析shapes中的引用，将ref替换为实际的几何数据"""
         if isinstance(shapes_data, dict):
             result = shapes_data.copy()
-            
+
             # 处理parts列表
             if 'parts' in result and isinstance(result['parts'], list):
                 resolved_parts = []
@@ -34,7 +34,7 @@ def tessellate_cad_objects(
                     resolved_part = resolve_shape_references(part, meshed_instances)
                     resolved_parts.append(resolved_part)
                 result['parts'] = resolved_parts
-            
+
             # 如果这是一个shape对象且有ref，替换为实际数据
             if 'shape' in result and isinstance(result['shape'], dict) and 'ref' in result['shape']:
                 ref_index = result['shape']['ref']
@@ -49,16 +49,14 @@ def tessellate_cad_objects(
                         'face_types': mesh_data.get('face_types', []),
                         'edge_types': mesh_data.get('edge_types', []),
                     }
-            
+
             return result
         elif isinstance(shapes_data, list):
             return [resolve_shape_references(item, meshed_instances) for item in shapes_data]
         else:
             return shapes_data
     
-    # 解析shapes中的引用
+    # 解析所有引用
     resolved_shapes = resolve_shape_references(shapes, meshed_instances)
     
-    # Return the correct data structure that the frontend expects
-    # The frontend expects shapes and the actual mesh data
-    return (resolved_shapes, meshed_instances), mapping 
+    return meshed_instances, resolved_shapes, mapping 

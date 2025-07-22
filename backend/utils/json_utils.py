@@ -1,3 +1,8 @@
+"""
+JSON序列化工具
+处理CAD对象和NumPy数组的JSON序列化
+"""
+
 import json
 import numpy as np
 
@@ -33,4 +38,4 @@ class NumpyEncoder(json.JSONEncoder):
             return str(obj)
         except:
             print(f"Warning: Could not serialize object: {type(obj)}")
-            return None
+            return None 
