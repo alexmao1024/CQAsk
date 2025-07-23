@@ -40,7 +40,7 @@ export function getCadInfo(objectId: string) {
     })
 }
 
-export function getCadDownload(id: string, file_type: "step" | "stl" | "obj" | "3mf" | "svg") {
+export function getCadDownload(id: string, file_type: "stl"|"step"|"amf"|"svg"|"tjs"|"dxf"|"vrml"|"vtp"|"3mf"|"brep"|"bin") {
   let config = {
     method: 'get' as const,
     maxBodyLength: Infinity,

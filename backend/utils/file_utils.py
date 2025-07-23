@@ -8,28 +8,38 @@ import os
 import cadquery as cq
 from typing import Optional
 
-def get_download_path(object_id: str, extension: str = "step") -> str:
+def get_download_path(object_id: str, extension: str, base_path_abs: str) -> str:
     """
     获取CAD对象的下载文件路径，如果文件不存在则自动生成
     
     Args:
         object_id: 对象ID
         extension: 文件扩展名 (step, stl, obj, etc.)
+        base_path_abs: 用于存放生成文件的绝对路径目录
     
     Returns:
         生成的文件路径
     """
-    # Export the CAD object
-    cad_file_path = f"data/generated/{object_id}.{extension}"
-    if not os.path.exists(cad_file_path):
+    # 确保目标目录存在
+    os.makedirs(base_path_abs, exist_ok=True)
+
+    cad_file_path_abs = os.path.join(base_path_abs, f"{object_id}.{extension}")
+    python_file_path_abs = os.path.join(base_path_abs, f"{object_id}.py")
+
+    if not os.path.exists(cad_file_path_abs):
         spec = importlib.util.spec_from_file_location(
-            "obj_module", f"data/generated/{object_id}.py"
+            "obj_module", python_file_path_abs
         )
         obj_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(obj_module)
 
-        cq.exporters.export(obj_module.obj, cad_file_path)
-    return cad_file_path
+        cq.exporters.export(
+            obj_module.obj,
+            cad_file_path_abs,
+            exportType=extension.upper()
+        )
+
+    return cad_file_path_abs
 
 def ensure_directory_exists(directory_path: str) -> None:
     """

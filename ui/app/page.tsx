@@ -105,9 +105,9 @@ export default function Home() {
   const onDownload = async (file_type: string) => {
     console.log(cadID, file_type)
     if (cadID) {
-      const validFormats = ["step", "stl", "obj", "3mf", "svg"]
+      const validFormats = ["stl", "step", "amf", "svg", "tjs", "dxf", "vrml", "vtp", "3mf", "brep", "bin"]
       if (validFormats.includes(file_type)) {
-        await downloadCadFile(cadID, file_type as "step" | "stl" | "obj" | "3mf" | "svg")
+        await downloadCadFile(cadID, file_type as "stl"|"step"|"amf"|"svg"|"tjs"|"dxf"|"vrml"|"vtp"|"3mf"|"brep"|"bin")
       }
     }
   }
@@ -121,8 +121,15 @@ export default function Home() {
       return [
         { value: 'step', label: 'STEP' },
         { value: 'stl', label: 'STL' },
-        { value: 'obj', label: 'OBJ' },
+        { value: 'amf', label: 'AMF' },
         { value: '3mf', label: '3MF' },
+        { value: 'svg', label: 'SVG' },
+        { value: 'tjs', label: 'TJS' },
+        { value: 'dxf', label: 'DXF' },
+        { value: 'vrml', label: 'VRML' },
+        { value: 'vtp', label: 'VTP' },
+        { value: 'brep', label: 'BREP' },
+        { value: 'bin', label: 'BIN' },
       ]
     }
   }

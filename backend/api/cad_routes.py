@@ -2,15 +2,16 @@
 CAD相关的API路由
 处理CAD生成、文件下载等请求
 """
+import os
 
-from flask import Blueprint, request, jsonify, send_file
+from flask import Blueprint, request, jsonify, send_file, current_app
 from flask_cors import cross_origin
 from services import CADService
 from utils import validate_api_request_data, get_download_path
 
 # 创建CAD蓝图
 cad_bp = Blueprint('cad', __name__)
-
+allowed_3d_formats = ["stl", "step", "amf", "svg", "tjs", "dxf", "vrml", "vtp", "3mf", "brep", "bin"]
 # 创建CAD服务实例
 cad_service = CADService()
 
@@ -71,27 +72,25 @@ def generate_cad():
 @cross_origin()
 def download_cad_file(object_id):
     """
-    下载CAD文件的API端点
+    下载CAD文件的API端点 (带调试信息)
     """
+    print("--- [调试开始] ---")
+    print(f"请求的 Object ID: {object_id}")
+
     try:
-        # 获取文件格式参数
+        generated_folder_abs = os.path.join(current_app.root_path, '..', 'data', 'generated')
         file_format = request.args.get("format", "step")
-        
-        # 检查是2D还是3D对象
-        import os
-        svg_file = f"data/generated/{object_id}.svg"
+        print(f"请求的文件格式 (format): {file_format}")
+        print(f"原始请求参数: {request.args}")
+
+        svg_file = os.path.join(generated_folder_abs, f"{object_id}.svg")
+        print(f"检查2D文件是否存在: {svg_file}")
         is_2d = os.path.exists(svg_file)
-        
+        print(f"是 2D 对象吗? {is_2d}")
+
         if is_2d:
-            # 2D对象只支持SVG格式
-            if file_format != "svg":
-                return jsonify({
-                    "error": "2D电路图只支持SVG格式下载",
-                    "supported_formats": ["svg"],
-                    "object_type": "2d"
-                }), 400
-            
-            # 直接返回SVG文件
+            # ... (2D 部分逻辑)
+            print("正在处理 2D SVG 文件下载...")
             return send_file(
                 svg_file,
                 as_attachment=True,
@@ -99,36 +98,42 @@ def download_cad_file(object_id):
                 mimetype="image/svg+xml"
             )
         else:
-            # 3D对象支持多种CAD格式
-            allowed_3d_formats = ["step", "stl", "obj", "3mf"]
+            print("正在处理 3D 模型下载...")
             if file_format not in allowed_3d_formats:
+                print(f"错误: 不支持的3D格式 {file_format}")
                 return jsonify({
                     "error": "3D模型不支持该文件格式",
                     "supported_formats": allowed_3d_formats,
                     "object_type": "3d"
                 }), 400
-            
-            # 获取3D文件路径
-            file_path = get_download_path(object_id, file_format)
-            
-            # 发送文件
+
+            print("调用 get_download_path...")
+            file_path = get_download_path(object_id, file_format, generated_folder_abs)
+            print(f"get_download_path 返回的文件路径: {file_path}")
+            print(f"检查最终文件是否存在: {os.path.exists(file_path)}")
+
+            print("准备发送文件...")
             return send_file(
                 file_path,
                 as_attachment=True,
                 download_name=f"{object_id}.{file_format}"
             )
-        
-    except FileNotFoundError:
+
+    except FileNotFoundError as e:
+        print(f"!!! 捕获到 FileNotFoundError: {e}")
         return jsonify({
-            "error": "文件不存在",
-            "object_id": object_id
+            "error": "文件不存在 (由FileNotFoundError触发)",
+            "object_id": object_id,
+            "details": str(e)
         }), 404
     except Exception as e:
-        print(f"Download Error: {e}")
+        print(f"!!! 捕获到未知异常: {e}")
         return jsonify({
             "error": "文件下载失败",
             "message": str(e)
         }), 500
+    finally:
+        print("--- [调试结束] ---")
 
 @cad_bp.route("/cad/<object_id>/info", methods=["GET"])
 @cross_origin()
@@ -166,7 +171,7 @@ def get_cad_info(object_id):
         
         # 检测渲染类型和支持的下载格式
         render_mode = "2d" if has_svg else "3d"
-        supported_formats = ["svg"] if has_svg else ["step", "stl", "obj", "3mf"]
+        supported_formats = ["svg"] if has_svg else allowed_3d_formats
         
         return jsonify({
             "object_id": object_id,
